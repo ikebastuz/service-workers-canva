@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Service Worker</title>
+		<link
+			href="https://cdn.jsdelivr.net/npm/daisyui@3.1.9/dist/full.css"
+			rel="stylesheet"
+			type="text/css"
+		/>
+		<script src="https://cdn.tailwindcss.com"></script>
+	</head>
+	<body>
+		<div class="p-8 m-auto flex flex-col py-8">
+			<button class="btn btn-primary mb-8" onClick="subscribeUser()">SUBSCRIBE</button>
+			<div class="mockup-code mb-8">
+				<pre data-prefix="$"><code id="raw"></code></pre>
+			</div>
+			<div class="mockup-code">
+				<pre data-prefix="$"><code id="prompt"></code></pre>
+			</div>
+		</div>
+	</body>
+	<script src="./sw.js"></script>
+	<script>
+		const vapidPubkey =
+			'BGN7aJTgeoDKYV9j43lo6AD5PEaXPFwWC-OxuJBsEaY5_oCpHiGUaA2_Wfx04tETKUPB9hZejf49Q1DoCmuZXGw';
+		const vapidPvtkey = 'GN1YHCIusmBFMoxyUdE1Fupu8pgOHKBy803swF2WKtA';
+		const vapidEmail = 'ikebastuz@gmail.com';
+		const payload = { title: 'Hello from push notification', body: 'Custom body here' };
+
+		const printSub = sub => {
+			const json = JSON.stringify(sub, null, 2);
+			console.log(json);
+			const jsonParsed = JSON.parse(json);
+			document.getElementById('raw').innerHTML = json;
+			document.getElementById('prompt').innerHTML = `
+  npx web-push send-notification \\
+	--endpoint="${jsonParsed.endpoint}" \\
+	--key="${jsonParsed.keys.p256dh}" \\
+	--auth="${jsonParsed.keys.auth}" \\
+	--vapid-pubkey="${vapidPubkey}" \\
+	--vapid-pvtkey="${vapidPvtkey}" \\
+	--vapid-subject="mailto:${vapidEmail}" \\
+	--payload='${JSON.stringify(payload)}'
+		            `;
+		};
+
+		const urlB64ToUint8Array = base64String => {
+			const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+			const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+
+			const rawData = window.atob(base64);
+			const outputArray = new Uint8Array(rawData.length);
+
+			for (let i = 0; i < rawData.length; ++i) {
+				outputArray[i] = rawData.charCodeAt(i);
+			}
+			return outputArray;
+		};
+
+		const subscribeUser = () => {
+			if ('serviceWorker' in navigator) {
+				navigator.serviceWorker.ready.then(reg => {
+					const applicationServerKey = urlB64ToUint8Array(vapidPubkey);
+
+					reg.pushManager
+						.subscribe({
+							userVisibleOnly: true,
+							applicationServerKey,
+						})
+						.then(sub => {
+							printSub(sub);
+						})
+						.catch(e => {
+							if (Notification.permission === 'denied') {
+								console.warn('Permission for notifications was denied');
+							} else {
+								console.error('Unable to subscribe to push', e);
+							}
+						});
+				});
+			}
+		};
+
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker
+				.register('sw.js')
+				.then(reg => {
+					console.log('Service Worker Registered!');
+					reg.pushManager.getSubscription().then(sub => {
+						if (sub === null) {
+							console.log('Not subscribed to push service!');
+						} else {
+							printSub(sub);
+						}
+					});
+				})
+				.catch(err => {
+					console.log('Service Worker registration failed: ', err);
+				});
+		}
+	</script>
+</html>
