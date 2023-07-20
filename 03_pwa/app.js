@@ -22,7 +22,7 @@ window.addEventListener('offline', () => {
 if ('serviceWorker' in navigator) {
 	navigator.serviceWorker
 		.register('sw.js', {
-			scope: '/05_pwa/', // This allows the service worker to control the whole app when testing locally.
+			scope: '/03_pwa/', // This allows the service worker to control the whole app when testing locally.
 		})
 		.then(registration => {
 			console.log('Service Worker registered successfully!', registration);

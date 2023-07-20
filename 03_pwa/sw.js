@@ -2,11 +2,11 @@ const origin = location.origin;
 
 const CACHE_NAME = 'my-pwa-cache-v2';
 const urlsToCache = [
-	`${origin}/05_pwa/`,
-	`${origin}/05_pwa/app.js`,
-	`${origin}/05_pwa/manifest.json`,
-	`${origin}/05_pwa/index.html`,
-	`${origin}/05_pwa/i_maked_this.png`,
+	`${origin}/03_pwa/`,
+	`${origin}/03_pwa/app.js`,
+	`${origin}/03_pwa/manifest.json`,
+	`${origin}/03_pwa/index.html`,
+	`${origin}/03_pwa/i_maked_this.png`,
 ];
 
 // Install the service worker and cache the static assets
